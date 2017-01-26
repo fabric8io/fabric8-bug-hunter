@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Single;
 
+import java.time.Duration;
+
 /**
  * @author kameshs
  */
@@ -29,8 +31,8 @@ public class BugHunterVerticle extends AbstractVerticle {
 
     //FIXME - need to have some query and its factories for standard log analysis
     final String queryString = "kubernetes.namespace_name: \"default\" " +
-        "AND kubernetes.labels.group: \"io.fabric8.devops.apps\"" +
-        "AND log: \"SimpleCalculatorApplication\" ";
+        "AND kubernetes.labels.group: \"io.fabric8\"" +
+        "AND log: \"Exception\" ";
 
     private ServiceDiscovery serviceDiscovery;
 
@@ -41,40 +43,46 @@ public class BugHunterVerticle extends AbstractVerticle {
             .setType("configmap")
             .setConfig(new JsonObject()
                 .put("namespace", "default")
-                .put("name", "fabric8-bug-spy"));
+                .put("name", "bug-hunter"));
 
         final ConfigurationRetrieverOptions cfgRetrieverOptions = new ConfigurationRetrieverOptions();
         cfgRetrieverOptions
             .addStore(cfgStoreOpts)
             .setScanPeriod(30000);
 
-        ConfigurationRetriever configMapRetriever = ConfigurationRetriever.create(vertx.getDelegate(), cfgRetrieverOptions);
+        ConfigurationRetriever configMapRetriever = ConfigurationRetriever.create(getVertx(), cfgRetrieverOptions);
 
         configMapRetriever.getConfiguration(configMap -> {
             if (configMap.succeeded()) {
                 JsonObject configData = configMap.result();
                 String esServiceName = configData.getString("elastic-search-service-name");
                 int esServicePort = configData.getInteger("elastic-search-service-port");
-                LOGGER.info("Elastic Search Service Name: {} and on port {}", esServiceName, esServicePort);
+                int huntingIntervalInSeconds = configData.getInteger("hunting-interval");
+                LOGGER.info("Elastic Search Service Name: {} and on port {} with schedule {} seconds", esServiceName,
+                    esServicePort, huntingIntervalInSeconds);
 
                 HttpClientOptions httpClientOptions = new HttpClientOptions();
                 httpClientOptions.setDefaultHost(esServiceName);
                 httpClientOptions.setDefaultPort(esServicePort);
-                elasticSearchEndpoint(httpClientOptions, result -> {
-                    if (result.succeeded()) {
-                        Single<HttpResponse<Buffer>> queryResponse = result.result();
-                        queryResponse.subscribe(res -> {
-                            JsonObject response = res.bodyAsJsonObject();
-                            if (res.statusCode() == 200) {
-                                LOGGER.info("Total Hits {}", response.getJsonObject("hits").getInteger("total"));
-                            } else {
-                                LOGGER.warn("Invalid response {}", res.statusMessage());
-                            }
-                        }, error -> LOGGER.error("Error while searching ", error));
-                    } else {
-                        LOGGER.error("Error while building the client ", result.cause());
-                    }
-                });
+
+                //FIXME - can I not make only Rx subscribe scheduled ??
+                vertx.setPeriodic(Duration.ofSeconds(huntingIntervalInSeconds).toMillis(),
+                    aLong -> elasticSearchEndpoint(httpClientOptions, result -> {
+                        if (result.succeeded()) {
+                            Single<HttpResponse<Buffer>> queryResponse = result.result();
+                            //FIXME - wonderful if I can make this scheduled 
+                            queryResponse.subscribe(res -> {
+                                JsonObject response = res.bodyAsJsonObject();
+                                if (res.statusCode() == 200) {
+                                    LOGGER.info("Total Hits {}", response.getJsonObject("hits").getInteger("total"));
+                                } else {
+                                    LOGGER.warn("Invalid response {}", res.statusMessage());
+                                }
+                            }, error -> LOGGER.error("Error while searching ", error));
+                        } else {
+                            LOGGER.error("Error while building the client ", result.cause());
+                        }
+                    }));
 
                /*
                 TODO: this works only when vert.x kubernetes discovery works for unknown type
@@ -133,6 +141,7 @@ public class BugHunterVerticle extends AbstractVerticle {
                         if (httpClientAsyncResult.succeeded()) {
                             HttpClient rxHttpClient = HttpClient.newInstance(httpClientAsyncResult.result());
                             WebClient webClient = WebClient.wrap(rxHttpClient);
+                            //TODO cache the get requests
                             queryResponseHandler.handle(Future.succeededFuture(webClient.get("logstash-*/_search")
                                 .addQueryParam("q", queryString)
                                 .rxSend()));

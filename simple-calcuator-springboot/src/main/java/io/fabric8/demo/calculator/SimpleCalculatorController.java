@@ -31,7 +31,7 @@ public class SimpleCalculatorController {
     public String add(@PathVariable("num1") Integer num1, @PathVariable("num2") Integer num2) {
         String hostname = System.getenv().getOrDefault("HOSTNAME", "Unknown");
         int result = (num1 + num2);
-        LOGGER.info("Product Result:{} executed on Pod {}",result,hostname);
+        LOGGER.info("Product Result:{} executed on Pod {}", result, hostname);
         return String.format("Service Host :%s \n %d + %d = %d", hostname, num1, num2, result);
     }
 
@@ -41,13 +41,13 @@ public class SimpleCalculatorController {
     public String sub(@PathVariable("num1") Integer num1, @PathVariable("num2") Integer num2) {
         String hostname = System.getenv().getOrDefault("HOSTNAME", "Unknown");
         int result = (num1 - num2);
-        LOGGER.info("Product Result:{} executed on Pod {}",result,hostname);
+        LOGGER.info("Product Result:{} executed on Pod {}", result, hostname);
         return String.format("Service Host :%s \n %d - %d = %d", hostname, num1, num2, result);
     }
 
     @CrossOrigin
     @RequestMapping(method = RequestMethod.POST, value = "/mul", produces = "text/plain",
-            consumes = "application/json")
+        consumes = "application/json")
     @ApiOperation("Multiplies two numbers passed as body json, only int/long supported")
     public String mul(@RequestBody String numbersJson) {
         LOGGER.debug("Request : {}", numbersJson);
@@ -62,13 +62,13 @@ public class SimpleCalculatorController {
             }
         }
         String hostname = System.getenv().getOrDefault("HOSTNAME", "Unknown");
-        LOGGER.info("Product Result:{} executed on Pod {}",product,hostname);
+        LOGGER.info("Product Result:{} executed on Pod {}", product, hostname);
         return String.format("Service Host :%s \n Product  = %d", hostname, product);
     }
 
     @CrossOrigin
     @RequestMapping(method = RequestMethod.POST, value = "/div", produces = "text/plain",
-            consumes = "application/json")
+        consumes = "application/json")
     @ApiOperation("Divides two numbers passed as json, all answer is returned as double")
     public String div(@RequestBody String numbersJson) {
         LOGGER.debug("Request : {}", numbersJson);
@@ -80,21 +80,20 @@ public class SimpleCalculatorController {
             if (jsonArray != null && jsonArray.length() > 0) {
                 for (int i = 0; i < jsonArray.length(); i++) {
                     double n = jsonArray.getDouble(i);
-                    if (n != 0) {
+                    //if pass zero then we will get Arithmetic Exception - that can be captured by log
+                    try {
                         if (answer == 0) {
                             answer = n;
                         } else {
                             answer = answer / n;
                         }
-                    } else {
-                        answer = 0;
-                        LOGGER.error("Exception Divide by 0");
-                        break;
+                    } catch (Exception e) {
+                        LOGGER.error("Error while divide", e);
                     }
                 }
             }
         }
-        LOGGER.info("Divide Result:{} executed on Pod {}",answer,hostname);
-        return String.format("Service Host :%s \n Answer = %f",hostname, answer);
+        LOGGER.info("Divide Result:{} executed on Pod {}", answer, hostname);
+        return String.format("Service Host :%s \n Answer = %f", hostname, answer);
     }
 }
