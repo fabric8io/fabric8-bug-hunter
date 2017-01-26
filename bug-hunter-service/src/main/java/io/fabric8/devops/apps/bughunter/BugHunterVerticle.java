@@ -30,9 +30,9 @@ public class BugHunterVerticle extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(BugHunterVerticle.class);
 
     //FIXME - need to have some query and its factories for standard log analysis
-    final String queryString = "kubernetes.namespace_name: \"default\" " +
-        "AND kubernetes.labels.group: \"io.fabric8\"" +
-        "AND log: \"Exception\" ";
+//    final String queryString = "kubernetes.namespace_name: \"default\" " +
+//        "AND kubernetes.labels.group: \"io.fabric8\"" +
+//        "AND log: \"Exception\" ";
 
     private ServiceDiscovery serviceDiscovery;
 
@@ -54,12 +54,20 @@ public class BugHunterVerticle extends AbstractVerticle {
 
         configMapRetriever.getConfiguration(configMap -> {
             if (configMap.succeeded()) {
+
                 JsonObject configData = configMap.result();
+
                 String esServiceName = configData.getString("elastic-search-service-name");
+
                 int esServicePort = configData.getInteger("elastic-search-service-port");
+
                 int huntingIntervalInSeconds = configData.getInteger("hunting-interval");
-                LOGGER.info("Elastic Search Service Name: {} and on port {} with schedule {} seconds", esServiceName,
-                    esServicePort, huntingIntervalInSeconds);
+
+                String searchQuery = configData.getString("hunting-search-query");
+
+                LOGGER.info("Elastic Search Service Name: {} and on port {} with schedule " +
+                        "{} seconds with Query:{}", esServiceName,
+                    esServicePort, huntingIntervalInSeconds, searchQuery);
 
                 HttpClientOptions httpClientOptions = new HttpClientOptions();
                 httpClientOptions.setDefaultHost(esServiceName);
@@ -70,7 +78,7 @@ public class BugHunterVerticle extends AbstractVerticle {
                     aLong -> elasticSearchEndpoint(httpClientOptions, result -> {
                         if (result.succeeded()) {
                             Single<HttpResponse<Buffer>> queryResponse = result.result();
-                            //FIXME - wonderful if I can make this scheduled 
+                            //FIXME - wonderful if I can make this scheduled
                             queryResponse.subscribe(res -> {
                                 JsonObject response = res.bodyAsJsonObject();
                                 if (res.statusCode() == 200) {
@@ -82,7 +90,7 @@ public class BugHunterVerticle extends AbstractVerticle {
                         } else {
                             LOGGER.error("Error while building the client ", result.cause());
                         }
-                    }));
+                    }, searchQuery));
 
                /*
                 TODO: this works only when vert.x kubernetes discovery works for unknown type
@@ -118,12 +126,13 @@ public class BugHunterVerticle extends AbstractVerticle {
      * @param queryResponseHandler
      */
     public void elasticSearchEndpoint(HttpClientOptions httpClientOptions,
-                                      Handler<AsyncResult<Single<HttpResponse<Buffer>>>> queryResponseHandler) {
+                                      Handler<AsyncResult<Single<HttpResponse<Buffer>>>> queryResponseHandler,
+                                      String searchQuery) {
         io.vertx.core.http.HttpClient httpClient = getVertx().createHttpClient(httpClientOptions);
         HttpClient rxHttpClient = HttpClient.newInstance(httpClient);
         WebClient webClient = WebClient.wrap(rxHttpClient);
         queryResponseHandler.handle(Future.succeededFuture(webClient.get("logstash-*/_search")
-            .addQueryParam("q", queryString)
+            .addQueryParam("q", searchQuery)
             .rxSend()));
     }
 
@@ -143,7 +152,7 @@ public class BugHunterVerticle extends AbstractVerticle {
                             WebClient webClient = WebClient.wrap(rxHttpClient);
                             //TODO cache the get requests
                             queryResponseHandler.handle(Future.succeededFuture(webClient.get("logstash-*/_search")
-                                .addQueryParam("q", queryString)
+                                .addQueryParam("q", "")
                                 .rxSend()));
                         } else {
                             LOGGER.error("Error building HttpClient", httpClientAsyncResult.cause());

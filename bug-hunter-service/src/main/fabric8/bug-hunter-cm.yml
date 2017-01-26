@@ -3,7 +3,11 @@ apiVersion: "v1"
 data:
   elastic-search-service-name: "elasticsearch"
   elastic-search-service-port: "9200"
-  hunting-interval: "3"
+  hunting-interval: "10"
+  hunting-search-query: |-
+    kubernetes.namespace_name: "default"
+     AND kubernetes.labels.group:"io.fabric8"
+     AND log: "Exception"
 kind: "ConfigMap"
 metadata: {}
 labels: {}
