@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.fabric8.devops.apps</groupId>
+    <artifactId>bug-hunter</artifactId>
+    <version>1.0</version>
+  </parent>
+
+  <artifactId>bug-hunter-service</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+
+  <name>fabric8:: Bug Hunter:: Service</name>
+  <description>The microservice that will analyse the elasticsearch logs and gather info</description>
+
+  <properties>
+    <vertx.verticle>io.fabric8.devops.apps.bughunter.BugHunterVerticle</vertx.verticle>
+    <!-- fabric8 properties-->
+    <fabric8.service.name>${project.artifactId}</fabric8.service.name>
+  </properties>
+
+  <dependencies>
+
+    <!-- vert.x dependencies -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-rx-java</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-service-discovery-bridge-kubernetes</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-configuration-kubernetes-configmap</artifactId>
+      <version>${vertx.version}</version>
+    </dependency>
+
+    <!-- TODO: enable it when needed - currently handling of unexposed http endpoints not discovered -->
+    <!-- dependency>
+      <groupId>io.fabric8.devops.apps</groupId>
+      <artifactId>collector-utils</artifactId>
+      <version>2.2.296</version>
+    </dependency -->
+
+    <!-- Logging -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-1.2-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+    </dependency>
+
+    <!-- TODO fabric8 integration tests -->
+
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.fabric8</groupId>
+        <artifactId>fabric8-maven-plugin</artifactId>
+        <version>${fabric8-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>fmp</id>
+            <phase>package</phase>
+            <goals>
+              <goal>resource</goal>
+              <goal>helm</goal>
+              <goal>build</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <resources>
+            <labels>
+              <service>
+                <expose>true</expose>
+              </service>
+            </labels>
+          </resources>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>io.fabric8</groupId>
+        <artifactId>vertx-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>vmp-init-package</id>
+            <goals>
+              <goal>initialize</goal>
+              <goal>package</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <redeploy>true</redeploy>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.fabric8.devops.apps</groupId>
+  <artifactId>bug-hunter</artifactId>
+  <packaging>pom</packaging>
+  <version>1.0</version>
+
+  <name>fabric8:: Bug Hunter:: Demo</name>
+  <description> A PoC for analysing the fabric8 applications/platform logs</description>
+
+  <modules>
+    <module>simple-calcuator-springboot</module>
+    <module>bug-hunter-service</module>
+  </modules>
+
+  <properties>
+
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- maven-compiler-plugin -->
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+
+    <!-- springboot -->
+    <spring-boot.version>1.4.3.RELEASE</spring-boot.version>
+
+    <!-- log4j -->
+    <log4j-bom.version>2.7</log4j-bom.version>
+
+    <!-- fabric8 -->
+    <fabric8-maven-plugin.version>3.2.15</fabric8-maven-plugin.version>
+    <fabric8.version>2.2.192</fabric8.version>
+
+    <!-- vert.x-->
+    <vertx.version>3.4.0-SNAPSHOT</vertx.version>
+    <fabric8.vertx.plugin.version>1.0-SNAPSHOT</fabric8.vertx.plugin.version>
+
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>io.fabric8</groupId>
+        <artifactId>fabric8-project-bom-with-platform-deps</artifactId>
+        <version>${fabric8.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.logging.log4j</groupId>
+        <artifactId>log4j-bom</artifactId>
+        <version>${log4j-bom.version}</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-dependencies</artifactId>
+        <version>${vertx.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <source>1.8</source>
+            <target>1.8</target>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>io.fabric8</groupId>
+          <artifactId>fabric8-maven-plugin</artifactId>
+          <version>${fabric8-maven-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>fmp</id>
+              <phase>package</phase>
+              <goals>
+                <goal>resource</goal>
+                <goal>helm</goal>
+                <goal>build</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <resources>
+              <labels>
+                <service>
+                  <expose>true</expose>
+                </service>
+              </labels>
+            </resources>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>io.fabric8</groupId>
+          <artifactId>vertx-maven-plugin</artifactId>
+          <version>${fabric8.vertx.plugin.version}</version>
+          <executions>
+            <execution>
+              <id>vmp-init-package</id>
+              <goals>
+                <goal>initialize</goal>
+                <goal>package</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <redeploy>true</redeploy>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+
+</project>
