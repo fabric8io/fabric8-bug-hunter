@@ -1,9 +1,11 @@
 package io.fabric8.devops.apps.bughunter.model;
 
+import io.vertx.core.json.JsonObject;
+
 /**
  * @author kameshs
  */
-public class PodInfo {
+public class PodInfo{
     private String namespace;
     private String host;
     private String containerName;

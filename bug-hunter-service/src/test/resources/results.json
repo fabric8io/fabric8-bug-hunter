@@ -1,0 +1,73 @@
+{
+  "took": 12,
+  "timed_out": false,
+  "_shards": {
+    "total": 10,
+    "successful": 10,
+    "failed": 0
+  },
+  "hits": {
+    "total": 2,
+    "max_score": 9.867972,
+    "hits": [
+      {
+        "_index": "logstash-2017.01.26",
+        "_type": "fluentd",
+        "_id": "AVnbzxBZZB-P-5-RnI_G",
+        "_score": 9.867972,
+        "_source": {
+          "log": "org.springframework.web.util.NestedServletException: Request processing failed; nested exception is org.json.JSONException: JSONArray[1] is not a number.\n",
+          "stream": "stdout",
+          "docker": {
+            "container_id": "bc42bd47f9887543768ae5fc6e06aa7cdaa8585c9145c022a22e9272e0a79030"
+          },
+          "kubernetes": {
+            "namespace_name": "default",
+            "pod_id": "e21387ae-e3eb-11e6-8a35-6a3fe2e876c7",
+            "pod_name": "simple-calculator-spring-1262323589-l4qvt",
+            "labels": {
+              "group": "io.fabric8.devops.apps",
+              "pod-template-hash": "1262323589",
+              "project": "simple-calculator-springboot",
+              "provider": "fabric8",
+              "version": "1.0.0-SNAPSHOT"
+            },
+            "host": "minikube",
+            "container_name": "spring-boot"
+          },
+          "tag": "kubernetes.var.log.containers.simple-calculator-spring-1262323589-l4qvt_default_spring-boot-bc42bd47f9887543768ae5fc6e06aa7cdaa8585c9145c022a22e9272e0a79030.log",
+          "@timestamp": "2017-01-26T17:24:55+00:00"
+        }
+      },
+      {
+        "_index": "logstash-2017.01.26",
+        "_type": "fluentd",
+        "_id": "AVnbzxBZZB-P-5-RnI_F",
+        "_score": 9.772448,
+        "_source": {
+          "log": "17:24:55.559 [XNIO-2 task-5] ERROR io.undertow.request - UT005023: Exception handling request to /api/div\n",
+          "stream": "stdout",
+          "docker": {
+            "container_id": "bc42bd47f9887543768ae5fc6e06aa7cdaa8585c9145c022a22e9272e0a79030"
+          },
+          "kubernetes": {
+            "namespace_name": "default",
+            "pod_id": "e21387ae-e3eb-11e6-8a35-6a3fe2e876c7",
+            "pod_name": "simple-calculator-spring-1262323589-l4qvt",
+            "labels": {
+              "group": "io.fabric8.devops.apps",
+              "pod-template-hash": "1262323589",
+              "project": "simple-calculator-springboot",
+              "provider": "fabric8",
+              "version": "1.0.0-SNAPSHOT"
+            },
+            "host": "minikube",
+            "container_name": "spring-boot"
+          },
+          "tag": "kubernetes.var.log.containers.simple-calculator-spring-1262323589-l4qvt_default_spring-boot-bc42bd47f9887543768ae5fc6e06aa7cdaa8585c9145c022a22e9272e0a79030.log",
+          "@timestamp": "2017-01-26T17:24:55+00:00"
+        }
+      }
+    ]
+  }
+}
