@@ -1,6 +1,8 @@
 package io.fabric8.devops.apps.bughunter;
 
+import io.fabric8.devops.apps.bughunter.events.ExceptionsEventManager;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpClientOptions;
@@ -10,12 +12,10 @@ import io.vertx.ext.configuration.ConfigurationRetrieverOptions;
 import io.vertx.ext.configuration.ConfigurationStoreOptions;
 import io.vertx.rxjava.core.AbstractVerticle;
 import io.vertx.rxjava.core.buffer.Buffer;
+import io.vertx.rxjava.core.eventbus.EventBus;
 import io.vertx.rxjava.core.http.HttpClient;
 import io.vertx.rxjava.ext.web.client.HttpResponse;
 import io.vertx.rxjava.ext.web.client.WebClient;
-import io.vertx.servicediscovery.ServiceDiscovery;
-import io.vertx.servicediscovery.kubernetes.KubernetesServiceImporter;
-import io.vertx.servicediscovery.types.HttpEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Single;
@@ -28,16 +28,17 @@ import java.time.Duration;
 public class BugHunterVerticle extends AbstractVerticle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BugHunterVerticle.class);
+    public static final String EXCEPTIONS_EVENT_BUS_ADDR = "exceptions-events";
 
     //FIXME - need to have some query and its factories for standard log analysis
 //    final String queryString = "kubernetes.namespace_name: \"default\" " +
 //        "AND kubernetes.labels.group: \"io.fabric8\"" +
 //        "AND log: \"Exception\" ";
 
-    private ServiceDiscovery serviceDiscovery;
-
     @Override
     public void start() throws Exception {
+
+        final EventBus eventBus = vertx.eventBus();
 
         final ConfigurationStoreOptions cfgStoreOpts = new ConfigurationStoreOptions()
             .setType("configmap")
@@ -65,9 +66,14 @@ public class BugHunterVerticle extends AbstractVerticle {
 
                 String searchQuery = configData.getString("hunting-search-query");
 
-                LOGGER.info("Elastic Search Service Name: {} and on port {} with schedule " +
+                LOGGER.trace("Elastic Search Service Name: {} and on port {} with schedule " +
                         "{} seconds with Query:{}", esServiceName,
                     esServicePort, huntingIntervalInSeconds, searchQuery);
+
+                //TODO is this right to make this worker ???
+                final DeploymentOptions exceptionsManagerOpts = new DeploymentOptions();
+                exceptionsManagerOpts.setWorker(true);
+                vertx.deployVerticle(ExceptionsEventManager.class.getName(), exceptionsManagerOpts);
 
                 HttpClientOptions httpClientOptions = new HttpClientOptions();
                 httpClientOptions.setDefaultHost(esServiceName);
@@ -82,7 +88,7 @@ public class BugHunterVerticle extends AbstractVerticle {
                             queryResponse.subscribe(res -> {
                                 JsonObject response = res.bodyAsJsonObject();
                                 if (res.statusCode() == 200) {
-                                    LOGGER.info("Total Hits {}", response.getJsonObject("hits").getInteger("total"));
+                                    eventBus.send(EXCEPTIONS_EVENT_BUS_ADDR, response);
                                 } else {
                                     LOGGER.warn("Invalid response {}", res.statusMessage());
                                 }
@@ -91,27 +97,6 @@ public class BugHunterVerticle extends AbstractVerticle {
                             LOGGER.error("Error while building the client ", result.cause());
                         }
                     }, searchQuery));
-
-               /*
-                TODO: this works only when vert.x kubernetes discovery works for unknown type
-                JsonObject serviceFilter = buildServiceFilter(esServiceName);
-                discoverServices(serviceFilter, result -> {
-                    if (result.succeeded()) {
-                        Single<HttpResponse<Buffer>> queryResponse = result.result();
-                        queryResponse.subscribe(res -> {
-                            JsonObject response = res.bodyAsJsonObject();
-                            if (res.statusCode() == 200) {
-                                LOGGER.info("Total Hits {}", response.getJsonObject("hits").getInteger("total"));
-                            } else {
-                                LOGGER.warn("Invalid response {}", res.statusMessage());
-                            }
-                        }, error -> LOGGER.error("Error while searching ", error));
-                    } else {
-                        LOGGER.error("Error while building the client ", result.cause());
-                    }
-                });*/
-
-
             } else {
                 LOGGER.error("Unable to find config map ", configMap.cause());
             }
@@ -134,36 +119,6 @@ public class BugHunterVerticle extends AbstractVerticle {
         queryResponseHandler.handle(Future.succeededFuture(webClient.get("logstash-*/_search")
             .addQueryParam("q", searchQuery)
             .rxSend()));
-    }
-
-
-    public void discoverServices(JsonObject serviceFilter,
-                                 Handler<AsyncResult<Single<HttpResponse<Buffer>>>> queryResponseHandler) {
-        serviceDiscovery = ServiceDiscovery.create(vertx.getDelegate());
-        KubernetesServiceImporter kubernetesServiceImporter = new KubernetesServiceImporter();
-
-        serviceDiscovery.registerServiceImporter(kubernetesServiceImporter, new JsonObject(),
-            result -> {
-                if (result.succeeded()) {
-                    LOGGER.info("Building HTTPClient with filter {}", serviceFilter);
-                    HttpEndpoint.getClient(serviceDiscovery, serviceFilter, httpClientAsyncResult -> {
-                        if (httpClientAsyncResult.succeeded()) {
-                            HttpClient rxHttpClient = HttpClient.newInstance(httpClientAsyncResult.result());
-                            WebClient webClient = WebClient.wrap(rxHttpClient);
-                            //TODO cache the get requests
-                            queryResponseHandler.handle(Future.succeededFuture(webClient.get("logstash-*/_search")
-                                .addQueryParam("q", "")
-                                .rxSend()));
-                        } else {
-                            LOGGER.error("Error building HttpClient", httpClientAsyncResult.cause());
-                            queryResponseHandler.handle(Future.failedFuture(httpClientAsyncResult.cause()));
-                        }
-                    });
-                } else {
-                    LOGGER.error("Error while discovering service", result.cause());
-                    queryResponseHandler.handle(Future.failedFuture(result.cause()));
-                }
-            });
     }
 
     /**

@@ -7,7 +7,6 @@ data:
   hunting-search-query: >-
     kubernetes.namespace_name: default
     AND kubernetes.labels.group: io.fabric8
-    AND kubernetes.labels.project: simple-calculator
     AND log: Exception
 kind: "ConfigMap"
 metadata: {}
