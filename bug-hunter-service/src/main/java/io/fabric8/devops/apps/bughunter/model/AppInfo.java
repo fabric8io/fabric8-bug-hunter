@@ -14,7 +14,8 @@ public class AppInfo {
     private String issueTrackerUrl;
     private String projectUrl;
 
-    public AppInfo(String group, String project, String version, String branch, String revision, String issueTrackerUrl, String projectUrl) {
+    public AppInfo(String group, String project, String version, String branch, String revision,
+                   String issueTrackerUrl, String projectUrl) {
         this.group = group;
         this.project = project;
         this.version = version;

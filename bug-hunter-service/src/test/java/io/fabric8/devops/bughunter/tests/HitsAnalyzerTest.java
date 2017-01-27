@@ -58,6 +58,7 @@ public class HitsAnalyzerTest {
         Single<Message<String>> single = eb.rxSend(BugHunterVerticle.EXCEPTIONS_EVENT_BUS_ADDR, hitsData);
 
         single.subscribe(response -> {
+            //System.out.println(response.body());
             List<Map> bugs = Json.decodeValue(response.body(), List.class);
             assertThat(bugs).isNotNull();
             assertThat(bugs).isNotEmpty();

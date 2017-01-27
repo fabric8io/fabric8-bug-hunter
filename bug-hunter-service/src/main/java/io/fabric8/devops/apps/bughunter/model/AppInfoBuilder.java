@@ -40,7 +40,7 @@ public class AppInfoBuilder {
     }
 
     public AppInfo createAppInfo() {
-        return new AppInfo(group, project, version, revision, issueTrackerUrl, projectUrl, branch);
+        return new AppInfo(group, project, version, branch, revision, issueTrackerUrl, projectUrl);
     }
 
     public AppInfoBuilder setBranch(String branch) {

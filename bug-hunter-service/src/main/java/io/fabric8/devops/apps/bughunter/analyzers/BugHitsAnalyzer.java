@@ -6,6 +6,7 @@ import io.fabric8.devops.apps.bughunter.model.BugInfo;
 import io.fabric8.devops.apps.bughunter.model.BugInfoBuilder;
 import io.fabric8.devops.apps.bughunter.model.PodInfoBuilder;
 import io.fabric8.devops.apps.bughunter.util.DateUtil;
+import io.fabric8.devops.apps.bughunter.util.KubernetesUtil;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -19,6 +20,7 @@ import rx.Observable;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * @author kameshs
@@ -75,15 +77,22 @@ public class BugHitsAnalyzer extends AbstractVerticle {
                     String group = labels.containsKey("group") ? labels.getString("group") : "";
                     String project = labels.containsKey("project") ? labels.getString("project") : "";
                     String version = labels.containsKey("version") ? labels.getString("version") : "";
+                    String provider = labels.containsKey("version") ? labels.getString("provider") : "";
 
+                    Map<String, String> appMetadata = KubernetesUtil.deploymentAnnotations(group, project, version, provider);
                     //Application specific information
+                    LOGGER.info("App Medata:{}", appMetadata);
                     appInfoBuilder
-                        .setBranch("")
+                        .setBranch(appMetadata.containsKey(KubernetesUtil.SCM_BRANCH)
+                            ? appMetadata.get(KubernetesUtil.SCM_BRANCH) : "")
                         .setGroup(group)
-                        .setIssueTrackerUrl("")
+                        .setIssueTrackerUrl(appMetadata.containsKey(KubernetesUtil.SCM_ISSUE_TRACKER_URL)
+                            ? appMetadata.get(KubernetesUtil.SCM_ISSUE_TRACKER_URL) : "")
                         .setProject(project)
-                        .setProjectUrl("")
-                        .setRevision("")
+                        .setProjectUrl(appMetadata.containsKey(KubernetesUtil.SCM_PROJECT_URL)
+                            ? appMetadata.get(KubernetesUtil.SCM_PROJECT_URL) : "")
+                        .setRevision(appMetadata.containsKey(KubernetesUtil.SCM_REVISION)
+                            ? appMetadata.get(KubernetesUtil.SCM_REVISION) : "")
                         .setVersion(version)
                         .createAppInfo();
 

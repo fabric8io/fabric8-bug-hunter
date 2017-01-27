@@ -1,3 +1,4 @@
 .vertx
 *.iml
 .idea
+**/K8sScrap.java
