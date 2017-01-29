@@ -3,7 +3,7 @@ package io.fabric8.devops.bughunter.tests;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.fabric8.devops.apps.bughunter.BugHunterVerticle;
-import io.fabric8.devops.apps.bughunter.events.ExceptionsEventManager;
+import io.fabric8.devops.apps.bughunter.analyzers.ExceptionsEventAnalyzer;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
@@ -39,7 +39,7 @@ public class HitsAnalyzerTest {
     @BeforeClass
     public static void deployVerticles() {
         vertx = Vertx.vertx();
-        vertx.deployVerticle(ExceptionsEventManager.class.getName());
+        vertx.deployVerticle(ExceptionsEventAnalyzer.class.getName());
     }
 
     @Test

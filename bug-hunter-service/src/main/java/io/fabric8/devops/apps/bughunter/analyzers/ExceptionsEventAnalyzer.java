@@ -1,8 +1,7 @@
-package io.fabric8.devops.apps.bughunter.events;
+package io.fabric8.devops.apps.bughunter.analyzers;
 
 import io.fabric8.devops.apps.bughunter.BugHunterVerticle;
 import io.fabric8.devops.apps.bughunter.analyzers.BugHitsAnalyzer;
-import io.fabric8.devops.apps.bughunter.codec.BugInfoCodec;
 import io.fabric8.devops.apps.bughunter.model.BugInfo;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.json.JsonArray;
@@ -14,25 +13,24 @@ import io.vertx.rxjava.core.eventbus.MessageConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
-import rx.Single;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * @author kameshs
  */
-public class ExceptionsEventManager extends AbstractVerticle {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionsEventManager.class);
-    public static final String BUGS_HIT_ANALZYER = "bugs-hit-analzyer";
+public class ExceptionsEventAnalyzer extends AbstractVerticle {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionsEventAnalyzer.class);
 
     @Override
     public void start() throws Exception {
         LOGGER.info("Starting ExceptionsEventManager ");
         EventBus eventBus = vertx.eventBus();
-        eventBus.getDelegate().registerDefaultCodec(BugInfo.class, new BugInfoCodec());
 
         DeploymentOptions deploymentOptions = new DeploymentOptions();
         deploymentOptions.setWorker(true);
-
-        vertx.deployVerticle(BugHitsAnalyzer.class.getName(), deploymentOptions);
 
         MessageConsumer<JsonObject> exceptionsHitsConsumer = eventBus
             .consumer(BugHunterVerticle.EXCEPTIONS_EVENT_BUS_ADDR);
@@ -44,15 +42,23 @@ public class ExceptionsEventManager extends AbstractVerticle {
                 JsonObject hits = hitMessage.body().getJsonObject("hits");
                 if (hits.containsKey("hits")) {
                     JsonArray hitOfHit = hits.getJsonArray("hits");
-                    LOGGER.info("Sending {} Bug Hits for Analysis", hitOfHit.size());
+                    Observable<Object> hitsOfHitObservable = Observable.from(hitOfHit);
 
-                    Single<Message<String>> single = eventBus.rxSend(BUGS_HIT_ANALZYER, hitOfHit);
+                    List<BugInfo> bugInfos = new ArrayList<>();
 
-                    single.subscribe(response -> {
-                        String bugInfosJson = response.body();
-                        LOGGER.trace("Bug Analyis{}", bugInfosJson);
-                        hitMessage.reply(bugInfosJson);
-                    }, error -> LOGGER.error("Error while analyzing bug hits", error));
+                    hitsOfHitObservable.subscribe(o -> {
+                            Optional<BugInfo> optBugInfo = BugHitsAnalyzer.process((JsonObject) o);
+                            if (optBugInfo.isPresent()) {
+                                BugInfo bugInfo = optBugInfo.get();
+                                bugInfos.add(bugInfo);
+                            }
+                        }
+                        ,
+                        error -> LOGGER.error("Error while analyzing hits", error)
+                        , () -> {
+                            LOGGER.info("Bugs Analyzed successfully...");
+                        }
+                    );
 
                 } else {
                     LOGGER.warn("No hits key found in JSON");

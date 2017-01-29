@@ -1,22 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-         xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <groupId>io.fabric8.devops.apps</groupId>
     <artifactId>bug-hunter</artifactId>
+    <groupId>io.fabric8.devops.apps</groupId>
     <version>1.0</version>
   </parent>
+  <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>bug-hunter-service</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
-
-  <name>fabric8:: Bug Hunter:: Service</name>
-  <description>The microservice that will analyse the elasticsearch logs and gather info</description>
+  <artifactId>elasticsearch-helper</artifactId>
+  <name>fabric8:: Elastic Search :: Helper Service</name>
+  <description>The microservice will have some common helper methods to perform REST operations on ES</description>
 
   <properties>
-    <vertx.verticle>io.fabric8.devops.apps.bughunter.BugHunterVerticle</vertx.verticle>
     <!-- fabric8 properties-->
     <fabric8.service.name>${project.artifactId}</fabric8.service.name>
     <commons-lang3.version>3.5</commons-lang3.version>
@@ -29,10 +26,7 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-rx-java</artifactId>
-    </dependency>
+
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-web-client</artifactId>
@@ -40,12 +34,12 @@
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-service-proxy</artifactId>
+      <artifactId>vertx-rx-java</artifactId>
     </dependency>
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-service-discovery-bridge-kubernetes</artifactId>
+      <artifactId>vertx-service-proxy</artifactId>
     </dependency>
 
     <dependency>
@@ -59,19 +53,46 @@
       <artifactId>commons-lang3</artifactId>
       <version>${commons-lang3.version}</version>
     </dependency>
-    <!-- vert.x service dependencies -->
+
+    <!-- vert.x polyglot -->
 
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-codegen</artifactId>
+      <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
 
-    <!-- TODO: enable it when needed - currently handling of unexposed http endpoints not discovered -->
-    <!-- dependency>
-      <groupId>io.fabric8.devops.apps</groupId>
-      <artifactId>collector-utils</artifactId>
-      <version>2.2.296</version>
-    </dependency -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-docgen</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-codetrans</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- supported polyglot langs -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-groovy</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-kotlin</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-js</artifactId>
+      <optional>true</optional>
+    </dependency>
 
     <!-- Logging -->
     <dependency>
@@ -125,6 +146,7 @@
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
+          <compilerArgument>-Xlint:all</compilerArgument>
           <annotationProcessors>
             <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
           </annotationProcessors>
@@ -175,6 +197,26 @@
           <redeploy>true</redeploy>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.12</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.basedir}/src/main/generated</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
+
 </project>

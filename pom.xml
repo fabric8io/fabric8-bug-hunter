@@ -13,6 +13,7 @@
   <description> A PoC for analysing the fabric8 applications/platform logs</description>
 
   <modules>
+    <module>elastic-search-helper</module>
     <module>simple-calcuator-springboot</module>
     <module>bug-hunter-service</module>
   </modules>

@@ -1,6 +1,6 @@
 package io.fabric8.devops.apps.bughunter;
 
-import io.fabric8.devops.apps.bughunter.events.ExceptionsEventManager;
+import io.fabric8.devops.apps.bughunter.analyzers.ExceptionsEventAnalyzer;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
@@ -29,11 +29,6 @@ public class BugHunterVerticle extends AbstractVerticle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BugHunterVerticle.class);
     public static final String EXCEPTIONS_EVENT_BUS_ADDR = "exceptions-events";
-
-    //FIXME - need to have some query and its factories for standard log analysis
-//    final String queryString = "kubernetes.namespace_name: \"default\" " +
-//        "AND kubernetes.labels.group: \"io.fabric8\"" +
-//        "AND log: \"Exception\" ";
 
     @Override
     public void start() throws Exception {
@@ -73,7 +68,7 @@ public class BugHunterVerticle extends AbstractVerticle {
                 //TODO is this right to make this worker ???
                 final DeploymentOptions exceptionsManagerOpts = new DeploymentOptions();
                 exceptionsManagerOpts.setWorker(true);
-                vertx.deployVerticle(ExceptionsEventManager.class.getName(), exceptionsManagerOpts);
+                vertx.deployVerticle(ExceptionsEventAnalyzer.class.getName(), exceptionsManagerOpts);
 
                 HttpClientOptions httpClientOptions = new HttpClientOptions();
                 httpClientOptions.setDefaultHost(esServiceName);
