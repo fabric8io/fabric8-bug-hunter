@@ -27,13 +27,8 @@ import io.vertx.core.json.JsonArray;
 public class BugInfoConverter {
 
   public static void fromJson(JsonObject json, BugInfo obj) {
-    if (json.getValue("apps") instanceof JsonArray) {
-      java.util.ArrayList<io.fabric8.devops.apps.bughunter.model.AppInfo> list = new java.util.ArrayList<>();
-      json.getJsonArray("apps").forEach( item -> {
-        if (item instanceof JsonObject)
-          list.add(new io.fabric8.devops.apps.bughunter.model.AppInfo((JsonObject)item));
-      });
-      obj.setApps(list);
+    if (json.getValue("app") instanceof JsonObject) {
+      obj.setApp(new io.fabric8.devops.apps.bughunter.model.AppInfo((JsonObject)json.getValue("app")));
     }
     if (json.getValue("count") instanceof Number) {
       obj.setCount(((Number)json.getValue("count")).intValue());
@@ -44,24 +39,20 @@ public class BugInfoConverter {
     if (json.getValue("logMessage") instanceof String) {
       obj.setLogMessage((String)json.getValue("logMessage"));
     }
-    if (json.getValue("pods") instanceof JsonArray) {
-      java.util.ArrayList<io.fabric8.devops.apps.bughunter.model.PodInfo> list = new java.util.ArrayList<>();
-      json.getJsonArray("pods").forEach( item -> {
-        if (item instanceof JsonObject)
-          list.add(new io.fabric8.devops.apps.bughunter.model.PodInfo((JsonObject)item));
-      });
-      obj.setPods(list);
+    if (json.getValue("pod") instanceof JsonObject) {
+      obj.setPod(new io.fabric8.devops.apps.bughunter.model.PodInfo((JsonObject)json.getValue("pod")));
     }
     if (json.getValue("score") instanceof Number) {
       obj.setScore(((Number)json.getValue("score")).floatValue());
     }
+    if (json.getValue("timestamp") instanceof String) {
+      obj.setTimestamp((String)json.getValue("timestamp"));
+    }
   }
 
   public static void toJson(BugInfo obj, JsonObject json) {
-    if (obj.getApps() != null) {
-      JsonArray array = new JsonArray();
-      obj.getApps().forEach(item -> array.add(item.toJson()));
-      json.put("apps", array);
+    if (obj.getApp() != null) {
+      json.put("app", obj.getApp().toJson());
     }
     json.put("count", obj.getCount());
     if (obj.getId() != null) {
@@ -70,11 +61,12 @@ public class BugInfoConverter {
     if (obj.getLogMessage() != null) {
       json.put("logMessage", obj.getLogMessage());
     }
-    if (obj.getPods() != null) {
-      JsonArray array = new JsonArray();
-      obj.getPods().forEach(item -> array.add(item.toJson()));
-      json.put("pods", array);
+    if (obj.getPod() != null) {
+      json.put("pod", obj.getPod().toJson());
     }
     json.put("score", obj.getScore());
+    if (obj.getTimestamp() != null) {
+      json.put("timestamp", obj.getTimestamp());
+    }
   }
 }

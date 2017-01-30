@@ -74,6 +74,7 @@ public class HitsAnalyzerTest {
         logsAnalyzerService.analyze(hitsData.getJsonObject("hits").getJsonArray("hits"), result -> {
             if (result.succeeded()) {
                 JsonArray bugsInfos = result.result().getJsonArray("bugs");
+                //System.out.println(bugsInfos);
                 testContext.assertNotNull(bugsInfos);
                 testContext.assertFalse(bugsInfos.isEmpty());
                 testContext.assertEquals(bugsInfos.size(), 2);

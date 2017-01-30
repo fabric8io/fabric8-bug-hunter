@@ -8,26 +8,28 @@ import io.fabric8.devops.apps.bughunter.model.PodInfo
  * A function providing a DSL for building [io.fabric8.devops.apps.bughunter.model.BugInfo] objects.
  *
  *
- * @param apps 
+ * @param app 
  * @param count 
  * @param id 
  * @param logMessage 
- * @param pods 
+ * @param pod 
  * @param score 
+ * @param timestamp 
  *
  * <p/>
  * NOTE: This function has been automatically generated from the [io.fabric8.devops.apps.bughunter.model.BugInfo original] using Vert.x codegen.
  */
 fun BugInfo(
-  apps: List<io.fabric8.devops.apps.bughunter.model.AppInfo>? = null,
+  app: io.fabric8.devops.apps.bughunter.model.AppInfo? = null,
   count: Int? = null,
   id: String? = null,
   logMessage: String? = null,
-  pods: List<io.fabric8.devops.apps.bughunter.model.PodInfo>? = null,
-  score: Float? = null): BugInfo = io.fabric8.devops.apps.bughunter.model.BugInfo().apply {
+  pod: io.fabric8.devops.apps.bughunter.model.PodInfo? = null,
+  score: Float? = null,
+  timestamp: String? = null): BugInfo = io.fabric8.devops.apps.bughunter.model.BugInfo().apply {
 
-  if (apps != null) {
-    this.setApps(apps)
+  if (app != null) {
+    this.setApp(app)
   }
   if (count != null) {
     this.setCount(count)
@@ -38,11 +40,14 @@ fun BugInfo(
   if (logMessage != null) {
     this.setLogMessage(logMessage)
   }
-  if (pods != null) {
-    this.setPods(pods)
+  if (pod != null) {
+    this.setPod(pod)
   }
   if (score != null) {
     this.setScore(score)
+  }
+  if (timestamp != null) {
+    this.setTimestamp(timestamp)
   }
 }
 

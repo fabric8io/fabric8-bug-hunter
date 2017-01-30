@@ -50,6 +50,27 @@ var ElasticSearchService = function(j_val) {
     } else throw new TypeError('function invoked with invalid arguments');
   };
 
+  /**
+
+   @public
+   @param index {string} 
+   @param type {string} 
+   @param data {Object} 
+   @param resultHandler {function} 
+   */
+  this.save = function(index, type, data, resultHandler) {
+    var __args = arguments;
+    if (__args.length === 4 && typeof __args[0] === 'string' && typeof __args[1] === 'string' && (typeof __args[2] === 'object' && __args[2] != null) && typeof __args[3] === 'function') {
+      j_elasticSearchService["save(java.lang.String,java.lang.String,io.vertx.core.json.JsonObject,io.vertx.core.Handler)"](index, type, utils.convParamJsonObject(data), function(ar) {
+      if (ar.succeeded()) {
+        resultHandler(utils.convReturnJson(ar.result()), null);
+      } else {
+        resultHandler(null, ar.cause());
+      }
+    });
+    } else throw new TypeError('function invoked with invalid arguments');
+  };
+
   // A reference to the underlying Java delegate
   // NOTE! This is an internal API and must not be used in user code.
   // If you rely on this property your code is likely to break if we change it / remove it without warning.

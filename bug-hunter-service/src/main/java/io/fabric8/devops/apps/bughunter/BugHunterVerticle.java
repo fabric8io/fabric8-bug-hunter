@@ -7,6 +7,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import rx.Observable;
 
 /**
  * @author kameshs
@@ -40,7 +41,19 @@ public class BugHunterVerticle extends AbstractVerticle {
                     JsonArray hitsOfHits = hits.getJsonArray("hits");
                     logsAnalyzerService.analyze(hitsOfHits, hitsAnalysisResult -> {
                         if (hitsAnalysisResult.succeeded()) {
-                            LOGGER.info("Analysis Result {}", hitsAnalysisResult.result());
+                            JsonObject bugsData = hitsAnalysisResult.result();
+                            LOGGER.debug("Analysis Result {}", bugsData);
+                            JsonArray bugs = bugsData.getJsonArray("bugs");
+                            Observable<Object> bugsObservable = Observable.from(bugs);
+                            bugsObservable.map(JsonObject.class::cast)
+                                .subscribe(bugData -> elasticSearchService.save("bughunter", "bugs", bugData,
+                                    res -> {
+                                        if (res.succeeded()) {
+                                            LOGGER.info("Saved data:{}", res.result());
+                                        } else {
+                                            LOGGER.info("Error saving data", res.cause());
+                                        }
+                                    }));
                         } else {
                             LOGGER.error("Error Analyzing Result", hitsAnalysisResult.cause());
                         }

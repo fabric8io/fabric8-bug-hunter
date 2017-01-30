@@ -10,9 +10,6 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.configuration.ConfigurationRetriever;
-import io.vertx.ext.configuration.ConfigurationRetrieverOptions;
-import io.vertx.ext.configuration.ConfigurationStoreOptions;
 import io.vertx.ext.web.client.HttpRequest;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.serviceproxy.ServiceException;
@@ -21,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 /**
  * @author kameshs
@@ -30,7 +27,6 @@ public class ElasticSearchServiceImpl implements ElasticSearchService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchServiceImpl.class);
 
-    private static final int CMLOADING = 1000;
     private static final int ESQ1001 = 1001;
     private static final int ESQ1002 = 1002;
 
@@ -38,33 +34,13 @@ public class ElasticSearchServiceImpl implements ElasticSearchService {
 
     private ElasticSearchOptions elasticSearchOptions;
 
-    private ConfigurationStoreOptions cfgStoreOpts;
-
-    private Optional<ConfigurationRetrieverOptions> cfgRetrieverOptions = Optional.empty();
-
     public ElasticSearchServiceImpl(Vertx vertx) {
         this(vertx, new ElasticSearchOptions());
     }
 
     public ElasticSearchServiceImpl(Vertx vertx, ElasticSearchOptions elasticSearchOptions) {
-
         this.vertx = vertx;
-
         this.elasticSearchOptions = elasticSearchOptions;
-
-        if (elasticSearchOptions.getConfigMap() != null) {
-            cfgStoreOpts = new ConfigurationStoreOptions()
-                .setType("configmap")
-                .setConfig(new JsonObject()
-                    .put("namespace", elasticSearchOptions.getKubernetesNamespace() == null
-                        ? "default" : elasticSearchOptions.getKubernetesNamespace())
-                    .put("name", elasticSearchOptions.getConfigMap()));
-            ConfigurationRetrieverOptions retrieverOptions = new ConfigurationRetrieverOptions()
-                .addStore(cfgStoreOpts)
-                .setScanPeriod(elasticSearchOptions.getConfigMapScanPeriod());
-            cfgRetrieverOptions = Optional.of(retrieverOptions);
-        }
-
     }
 
     //TODO add some error context info
@@ -79,23 +55,36 @@ public class ElasticSearchServiceImpl implements ElasticSearchService {
 
         LOGGER.info("Searching with q={} on indexes {}", searchQuery, indexes);
 
-        if (cfgRetrieverOptions.isPresent()) {
-            LOGGER.info("Using ConfigMap for Elastic Search Options");
-            ConfigurationRetrieverOptions retrieverOptions = cfgRetrieverOptions.get();
-            ConfigurationRetriever configMapRetriever = ConfigurationRetriever.create(vertx, retrieverOptions);
-            configMapRetriever.getConfiguration(configMap -> {
-                if (configMap.succeeded()) {
-                    HttpClientOptions httpClientOptions = createHttpClientOptions(isSsl, esServiceName, esServicePort);
-                    query(searchQuery, indexes, resultHandler, httpClientOptions);
+        HttpClientOptions httpClientOptions = createHttpClientOptions(isSsl, esServiceName, esServicePort);
+        query(searchQuery, indexes, resultHandler, httpClientOptions);
+    }
+
+    @Override
+    public void save(String index, String type, JsonObject data, Handler<AsyncResult<JsonObject>> resultHandler) {
+
+        LOGGER.info("Saving Data to Index {}", index);
+
+        boolean isSsl = elasticSearchOptions.isSsl();
+        String esServiceName = elasticSearchOptions.getHost();
+        int esServicePort = elasticSearchOptions.getPort();
+
+        final String uri = "/" + index + "/" + type + "/" + UUID.randomUUID();
+
+        HttpClientOptions httpClientOptions = createHttpClientOptions(isSsl, esServiceName, esServicePort);
+        elasticSearchSaveEndpoint(httpClientOptions, req -> {
+
+            req.result().sendJsonObject(data, response -> {
+                if (response.succeeded()) {
+                    LOGGER.debug("Successfully saved data to  index {}", index);
+                    resultHandler.handle(Future.succeededFuture(response.result().bodyAsJsonObject()));
                 } else {
-                    LOGGER.error("Error loading Config Map:", configMap.cause());
-                    resultHandler.handle(ServiceException.fail(CMLOADING, configMap.cause().getMessage()));
+                    LOGGER.error("Error saving data to index " + index, response.cause());
+                    //TODO Convert this to Service Exception
+                    resultHandler.handle(Future.failedFuture(response.cause()));
                 }
             });
-        } else {
-            HttpClientOptions httpClientOptions = createHttpClientOptions(isSsl, esServiceName, esServicePort);
-            query(searchQuery, indexes, resultHandler, httpClientOptions);
-        }
+
+        }, uri);
     }
 
     /**
@@ -126,6 +115,20 @@ public class ElasticSearchServiceImpl implements ElasticSearchService {
         HttpRequest<Buffer> httpRequest = webClient.get(uri).addQueryParam("q", searchQuery);
         //TODO add request in cache and reuse it
         queryRequestHandler.handle(Future.succeededFuture(httpRequest));
+    }
+
+    /**
+     * @param httpClientOptions
+     * @param saveRequestHandler
+     */
+    protected void elasticSearchSaveEndpoint(HttpClientOptions httpClientOptions,
+                                             Handler<AsyncResult<HttpRequest<Buffer>>> saveRequestHandler,
+                                             String uri) {
+        HttpClient httpClient = vertx.createHttpClient(httpClientOptions);
+        WebClient webClient = WebClient.wrap(httpClient);
+        HttpRequest<Buffer> httpRequest = webClient.put(uri);
+        //TODO add request in cache and reuse it
+        saveRequestHandler.handle(Future.succeededFuture(httpRequest));
     }
 
 

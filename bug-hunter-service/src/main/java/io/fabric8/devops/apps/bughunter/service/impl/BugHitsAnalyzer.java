@@ -3,13 +3,11 @@ package io.fabric8.devops.apps.bughunter.service.impl;
 import io.fabric8.devops.apps.bughunter.model.AppInfo;
 import io.fabric8.devops.apps.bughunter.model.BugInfo;
 import io.fabric8.devops.apps.bughunter.model.PodInfo;
-import io.fabric8.devops.apps.bughunter.util.DateUtil;
 import io.fabric8.devops.apps.bughunter.util.KubernetesUtil;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 
@@ -57,7 +55,7 @@ public class BugHitsAnalyzer {
 
             //Application specific information
 
-            LOGGER.info("App Medata:{}", appMetadata);
+            LOGGER.info("App Metadata:{}", appMetadata);
 
             appInfo
                 .setBranch(appMetadata.containsKey(KubernetesUtil.SCM_BRANCH)
@@ -72,7 +70,7 @@ public class BugHitsAnalyzer {
                     ? appMetadata.get(KubernetesUtil.SCM_REVISION) : "")
                 .setVersion(version);
 
-            bugInfo.getApps().add(appInfo);
+            bugInfo.setApp(appInfo);
 
             //Add Pod Related Information
             podInfo
@@ -82,16 +80,17 @@ public class BugHitsAnalyzer {
                 .setPodId(k8sPodId)
                 .setPodName(k8sPodName);
 
-            bugInfo.getPods().add(podInfo);
+            bugInfo.setPod(podInfo);
 
             //Retrieve Log Info
             String logMessage = msgSource.getString("log");
-            Date timestamp = DateUtil.fromISO8601(msgSource.getString("@timestamp"));
+            String timestamp = msgSource.getString("@timestamp");
 
             return Optional.of(bugInfo.setId(id)
                 .setScore(score)
                 .setTimestamp(timestamp)
                 .setLogMessage(logMessage));
+
         }
 
         return optionalBugInfo;

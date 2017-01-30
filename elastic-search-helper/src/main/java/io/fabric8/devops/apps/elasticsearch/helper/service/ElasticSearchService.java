@@ -26,4 +26,13 @@ public interface ElasticSearchService {
      * @param resultHandler
      */
     void search(String searchQuery, Handler<AsyncResult<JsonObject>> resultHandler);
+
+    /**
+     *
+     * @param index
+     * @param type
+     * @param data
+     * @param resultHandler
+     */
+    void save(String index, String type, JsonObject data, Handler<AsyncResult<JsonObject>> resultHandler);
 }

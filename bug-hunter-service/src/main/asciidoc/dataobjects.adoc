@@ -31,12 +31,13 @@
 [frame="topbot"]
 |===
 ^|Name | Type ^| Description
-|[[apps]]`apps`|`Array of link:dataobjects.html#AppInfo[AppInfo]`|-
+|[[app]]`app`|`link:dataobjects.html#AppInfo[AppInfo]`|-
 |[[count]]`count`|`Number (int)`|-
 |[[id]]`id`|`String`|-
 |[[logMessage]]`logMessage`|`String`|-
-|[[pods]]`pods`|`Array of link:dataobjects.html#PodInfo[PodInfo]`|-
+|[[pod]]`pod`|`link:dataobjects.html#PodInfo[PodInfo]`|-
 |[[score]]`score`|`Number (float)`|-
+|[[timestamp]]`timestamp`|`String`|-
 |===
 
 [[PodInfo]]
