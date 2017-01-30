@@ -6,6 +6,7 @@ import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -17,9 +18,9 @@ public interface LogsAnalyzerService {
 
     String EXCEPTIONS_EVENT_BUS_ADDR = ExceptionsLogsAnalyzer.class.getName();
 
-    static LogsAnalyzerService createExceptionAnalyzer(Vertx vertx) {
-        return new ExceptionsLogsAnalyzer(vertx);
+    static LogsAnalyzerService createExceptionAnalyzerProxy(Vertx vertx) {
+        return new LogsAnalyzerServiceVertxEBProxy(vertx, EXCEPTIONS_EVENT_BUS_ADDR);
     }
 
-    void analyze(Handler<AsyncResult<JsonObject>> resultHandler);
+    void analyze(JsonArray hits, Handler<AsyncResult<JsonObject>> resultHandler);
 }

@@ -34,12 +34,13 @@ var LogsAnalyzerService = function(j_val) {
   /**
 
    @public
+   @param hits {todo} 
    @param resultHandler {function} 
    */
-  this.analyze = function(resultHandler) {
+  this.analyze = function(hits, resultHandler) {
     var __args = arguments;
-    if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_logsAnalyzerService["analyze(io.vertx.core.Handler)"](function(ar) {
+    if (__args.length === 2 && typeof __args[0] === 'object' && __args[0] instanceof Array && typeof __args[1] === 'function') {
+      j_logsAnalyzerService["analyze(io.vertx.core.json.JsonArray,io.vertx.core.Handler)"](utils.convParamJsonArray(hits), function(ar) {
       if (ar.succeeded()) {
         resultHandler(utils.convReturnJson(ar.result()), null);
       } else {
@@ -80,10 +81,10 @@ LogsAnalyzerService._create = function(jdel) {
  @param vertx {Vertx} 
  @return {LogsAnalyzerService}
  */
-LogsAnalyzerService.createExceptionAnalyzer = function(vertx) {
+LogsAnalyzerService.createExceptionAnalyzerProxy = function(vertx) {
   var __args = arguments;
   if (__args.length === 1 && typeof __args[0] === 'object' && __args[0]._jdel) {
-    return utils.convReturnVertxGen(LogsAnalyzerService, JLogsAnalyzerService["createExceptionAnalyzer(io.vertx.core.Vertx)"](vertx._jdel));
+    return utils.convReturnVertxGen(LogsAnalyzerService, JLogsAnalyzerService["createExceptionAnalyzerProxy(io.vertx.core.Vertx)"](vertx._jdel));
   } else throw new TypeError('function invoked with invalid arguments');
 };
 

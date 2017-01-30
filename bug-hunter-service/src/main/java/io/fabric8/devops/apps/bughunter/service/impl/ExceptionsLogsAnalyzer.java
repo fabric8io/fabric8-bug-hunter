@@ -6,8 +6,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
@@ -23,52 +21,37 @@ import java.util.stream.Collectors;
 public class ExceptionsLogsAnalyzer implements LogsAnalyzerService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExceptionsLogsAnalyzer.class);
 
-    private final EventBus eventBus;
-
-    private MessageConsumer<JsonArray> exceptionsHitsConsumer;
+    //TODO for future use
+    private final Vertx vertx;
 
     public ExceptionsLogsAnalyzer(Vertx vertx) {
-        this.eventBus = vertx.eventBus();
-        exceptionsHitsConsumer = eventBus.consumer(EXCEPTIONS_EVENT_BUS_ADDR);
+        this.vertx = vertx;
     }
 
     @Override
-    public void analyze(Handler<AsyncResult<JsonObject>> resultHandler) {
+    public void analyze(JsonArray hits, Handler<AsyncResult<JsonObject>> resultHandler) {
 
-        LOGGER.info("ExceptionsLogsAnalyzer is consuming messages from '{}' ", exceptionsHitsConsumer.address());
+        LOGGER.info("Analyzing Exceptions ...");
 
-        exceptionsHitsConsumer.exceptionHandler(throwable ->
-            LOGGER.error("Error ExceptionsLogsAnalyzer:", throwable));
+        final JsonObject jBugInfo = new JsonObject();
 
-        exceptionsHitsConsumer.handler(hitMessage -> {
+        final JsonArray jBugInfos = new JsonArray();
 
-            LOGGER.info(">>");
+        final List<Optional<BugInfo>> bugInfos = hits.stream()
+            .map(JsonObject.class::cast)
+            .map(BugHitsAnalyzer::process)
+            .collect(Collectors.toList());
 
-            JsonArray hitOfHit = hitMessage.body();
+        LOGGER.info("Collected {} bug hits", bugInfos.size());
 
-            final JsonObject jBugInfo = new JsonObject();
+        bugInfos.stream()
+            .filter(o -> o.isPresent())
+            .map(o -> o.get().toJson())
+            .forEach(o -> jBugInfos.add(o));
 
-            final JsonArray jBugInfos = new JsonArray();
+        jBugInfo.put("bugs", jBugInfos);
 
-            final List<Optional<BugInfo>> bugInfos = hitOfHit.stream()
-                .map(JsonObject.class::cast)
-                .map(BugHitsAnalyzer::process)
-                .collect(Collectors.toList());
+        resultHandler.handle(Future.succeededFuture(jBugInfo));
 
-            LOGGER.info("Collected {} bug hits", bugInfos.size());
-
-            bugInfos.stream()
-                .filter(o -> o.isPresent())
-                .map(o -> o.get().toJson())
-                .forEach(o -> jBugInfos.add(o));
-
-            jBugInfo.put("bugs", jBugInfos);
-
-            resultHandler.handle(Future.succeededFuture(jBugInfo));
-
-        });
-
-
-        //TODO define error handler???
     }
 }

@@ -1,6 +1,5 @@
 package io.fabric8.devops.apps.elasticsearch.helper.service;
 
-import io.fabric8.devops.apps.elasticsearch.helper.service.impl.ElasticSearchServiceImpl;
 import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
@@ -18,12 +17,8 @@ public interface ElasticSearchService {
 
     String ES_SEARCH_BUS_ADDRESS = ElasticSearchService.class.getName();
 
-    static ElasticSearchService create(Vertx vertx) {
-        return new ElasticSearchServiceImpl(vertx);
-    }
-
-    static ElasticSearchService createWithOptions(Vertx vertx, ElasticSearchOptions elasticSearchOptions) {
-        return new ElasticSearchServiceImpl(vertx, elasticSearchOptions);
+    static ElasticSearchService createProxy(Vertx vertx) {
+        return new ElasticSearchServiceVertxEBProxy(vertx, ES_SEARCH_BUS_ADDRESS);
     }
 
     /**

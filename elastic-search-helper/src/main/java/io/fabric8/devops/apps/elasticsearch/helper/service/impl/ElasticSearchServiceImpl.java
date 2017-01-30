@@ -7,7 +7,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonObject;
@@ -52,21 +51,6 @@ public class ElasticSearchServiceImpl implements ElasticSearchService {
         this.vertx = vertx;
 
         this.elasticSearchOptions = elasticSearchOptions;
-
-        EventBus eventBus = vertx.eventBus();
-
-        //Search Address Bus
-        eventBus.<String>consumer(ES_SEARCH_BUS_ADDRESS, (message) -> search(message.body(),
-            searchResult -> {
-
-                if (searchResult.succeeded()) {
-                    message.reply(searchResult.result());
-                } else {
-                    LOGGER.error("Error searching", searchResult.cause());
-                    //TODO
-                }
-
-            }));
 
         if (elasticSearchOptions.getConfigMap() != null) {
             cfgStoreOpts = new ConfigurationStoreOptions()

@@ -21,7 +21,6 @@ var Vertx = require('vertx-js/vertx');
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
 var JElasticSearchService = Java.type('io.fabric8.devops.apps.elasticsearch.helper.service.ElasticSearchService');
-var ElasticSearchOptions = Java.type('io.fabric8.devops.apps.elasticsearch.helper.service.ElasticSearchOptions');
 
 /**
 
@@ -82,24 +81,10 @@ ElasticSearchService._create = function(jdel) {
  @param vertx {Vertx} 
  @return {ElasticSearchService}
  */
-ElasticSearchService.create = function(vertx) {
+ElasticSearchService.createProxy = function(vertx) {
   var __args = arguments;
   if (__args.length === 1 && typeof __args[0] === 'object' && __args[0]._jdel) {
-    return utils.convReturnVertxGen(ElasticSearchService, JElasticSearchService["create(io.vertx.core.Vertx)"](vertx._jdel));
-  } else throw new TypeError('function invoked with invalid arguments');
-};
-
-/**
-
- @memberof module:elasticsearch-helper-js/elastic_search_service
- @param vertx {Vertx} 
- @param elasticSearchOptions {Object} 
- @return {ElasticSearchService}
- */
-ElasticSearchService.createWithOptions = function(vertx, elasticSearchOptions) {
-  var __args = arguments;
-  if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && (typeof __args[1] === 'object' && __args[1] != null)) {
-    return utils.convReturnVertxGen(ElasticSearchService, JElasticSearchService["createWithOptions(io.vertx.core.Vertx,io.fabric8.devops.apps.elasticsearch.helper.service.ElasticSearchOptions)"](vertx._jdel, elasticSearchOptions != null ? new ElasticSearchOptions(new JsonObject(Java.asJSONCompatible(elasticSearchOptions))) : null));
+    return utils.convReturnVertxGen(ElasticSearchService, JElasticSearchService["createProxy(io.vertx.core.Vertx)"](vertx._jdel));
   } else throw new TypeError('function invoked with invalid arguments');
 };
 

@@ -16,7 +16,7 @@
   <description>The microservice that will analyse the elasticsearch logs and gather info</description>
 
   <properties>
-    <vertx.verticle>io.fabric8.devops.apps.bughunter.BugHunterVerticle</vertx.verticle>
+    <vertx.verticle>io.fabric8.devops.apps.bughunter.BugHunterMainVerticle</vertx.verticle>
     <!-- fabric8 properties-->
     <fabric8.service.name>${project.artifactId}</fabric8.service.name>
     <commons-lang3.version>3.5</commons-lang3.version>

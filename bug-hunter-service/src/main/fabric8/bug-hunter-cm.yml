@@ -4,7 +4,7 @@ data:
   elastic-search-service-name: "elasticsearch"
   elastic-search-service-port: "9200"
   elastic-search-indexes: "logstash-*"
-  hunting-interval: "10"
+  hunting-interval-seconds: "10"
   hunting-search-query: >-
     kubernetes.namespace_name: default
     AND kubernetes.labels.group: io.fabric8
