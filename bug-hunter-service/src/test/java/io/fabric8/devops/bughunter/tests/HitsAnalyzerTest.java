@@ -3,30 +3,25 @@ package io.fabric8.devops.bughunter.tests;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.fabric8.devops.apps.bughunter.BugHunterVerticle;
-import io.fabric8.devops.apps.bughunter.analyzers.ExceptionsEventAnalyzer;
-import io.vertx.core.json.Json;
+import io.fabric8.devops.apps.bughunter.service.LogsAnalyzerService;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-import io.vertx.rxjava.core.Vertx;
-import io.vertx.rxjava.core.eventbus.EventBus;
-import io.vertx.rxjava.core.eventbus.Message;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import rx.Single;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author kameshs
@@ -37,14 +32,14 @@ public class HitsAnalyzerTest {
     private static Vertx vertx;
 
     @BeforeClass
-    public static void deployVerticles() {
+    public static void setup() {
         vertx = Vertx.vertx();
-        vertx.deployVerticle(ExceptionsEventAnalyzer.class.getName());
     }
 
     @Test
     public void testBuildBugInfoModel(TestContext testContext) throws Exception {
-        EventBus eb = vertx.eventBus();
+
+        EventBus eventBus = vertx.eventBus();
 
         String jsonResult = read(this.getClass().getResourceAsStream("/results.json"));
 
@@ -55,20 +50,28 @@ public class HitsAnalyzerTest {
 
         JsonObject hitsData = new JsonObject(objectMap);
 
-        Single<Message<String>> single = eb.rxSend(BugHunterVerticle.EXCEPTIONS_EVENT_BUS_ADDR, hitsData);
 
-        single.subscribe(response -> {
-            //System.out.println(response.body());
-            List<Map> bugs = Json.decodeValue(response.body(), List.class);
-            assertThat(bugs).isNotNull();
-            assertThat(bugs).isNotEmpty();
-            assertThat(bugs.size()).isEqualTo(2);
+        LogsAnalyzerService logsAnalyzerService = LogsAnalyzerService.createExceptionAnalyzer(vertx);
+
+        eventBus.send(LogsAnalyzerService.EXCEPTIONS_EVENT_BUS_ADDR, hitsData, event -> {
+            if (event.succeeded()) {
+                System.out.println("success");
+            } else {
+                System.err.println(event.cause());
+            }
+        });
+
+        logsAnalyzerService.analyze(result -> {
+            if (result.succeeded()) {
+                System.out.println(result.result());
+
+            } else {
+                System.err.println(result.cause());
+            }
             testContext.async().complete();
-            assertThat(bugs.get(0).get("id")).isEqualTo("AVnbzxBZZB-P-5-RnI_G");
-            assertThat(bugs.get(1).get("score")).isEqualTo(9.772448);
-        }, error -> error.printStackTrace());
+        });
 
-        SECONDS.sleep(3); //give it some time for the process to run in BG
+        SECONDS.sleep(13); //give it some time for the process to run in BG
 
     }
 

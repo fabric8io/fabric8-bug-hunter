@@ -31,10 +31,6 @@
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-rx-java</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
       <artifactId>vertx-web-client</artifactId>
     </dependency>
 
@@ -45,13 +41,14 @@
 
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-service-discovery-bridge-kubernetes</artifactId>
+      <artifactId>vertx-configuration-kubernetes-configmap</artifactId>
+      <version>${vertx.version}</version>
     </dependency>
 
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-configuration-kubernetes-configmap</artifactId>
-      <version>${vertx.version}</version>
+      <groupId>io.fabric8.devops.apps</groupId>
+      <artifactId>elasticsearch-helper</artifactId>
+      <version>${project.version}</version>
     </dependency>
 
     <dependency>
@@ -59,19 +56,51 @@
       <artifactId>commons-lang3</artifactId>
       <version>${commons-lang3.version}</version>
     </dependency>
-    <!-- vert.x service dependencies -->
+
+    <!-- vert.x code gen -->
 
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-codegen</artifactId>
+      <scope>provided</scope>
     </dependency>
 
-    <!-- TODO: enable it when needed - currently handling of unexposed http endpoints not discovered -->
-    <!-- dependency>
-      <groupId>io.fabric8.devops.apps</groupId>
-      <artifactId>collector-utils</artifactId>
-      <version>2.2.296</version>
-    </dependency -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-docgen</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-codetrans</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-rx-java</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- supported polyglot langs -->
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-groovy</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-kotlin</artifactId>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-lang-js</artifactId>
+      <optional>true</optional>
+    </dependency>
 
     <!-- Logging -->
     <dependency>
@@ -125,6 +154,7 @@
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
+          <compilerArgument>-Xlint:all</compilerArgument>
           <annotationProcessors>
             <annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
           </annotationProcessors>
@@ -132,6 +162,25 @@
             <arg>-Acodegen.output=${project.basedir}/src/main</arg>
           </compilerArgs>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>1.12</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>${project.basedir}/src/main/generated</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>io.fabric8</groupId>

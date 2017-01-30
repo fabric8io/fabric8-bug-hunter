@@ -11,6 +11,8 @@
 
   <artifactId>elasticsearch-helper</artifactId>
   <name>fabric8:: Elastic Search :: Helper Service</name>
+  <version>1.0.0-SNAPSHOT</version>
+
   <description>The microservice will have some common helper methods to perform REST operations on ES</description>
 
   <properties>
@@ -54,7 +56,7 @@
       <version>${commons-lang3.version}</version>
     </dependency>
 
-    <!-- vert.x polyglot -->
+    <!-- vert.x code gen -->
 
     <dependency>
       <groupId>io.vertx</groupId>

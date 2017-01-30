@@ -91,7 +91,6 @@ public class ElasticSearchServiceImpl implements ElasticSearchService {
         String esServiceName = elasticSearchOptions.getHost();
         int esServicePort = elasticSearchOptions.getPort();
 
-
         List<String> indexes = elasticSearchOptions.getIndexes();
 
         LOGGER.info("Searching with q={} on indexes {}", searchQuery, indexes);
@@ -102,10 +101,7 @@ public class ElasticSearchServiceImpl implements ElasticSearchService {
             ConfigurationRetriever configMapRetriever = ConfigurationRetriever.create(vertx, retrieverOptions);
             configMapRetriever.getConfiguration(configMap -> {
                 if (configMap.succeeded()) {
-                    JsonObject configData = configMap.result();
-                    String serviceName = configData.getString("elastic-search-service-name");
-                    int servicePort = configData.getInteger("elastic-search-service-port");
-                    HttpClientOptions httpClientOptions = createHttpClientOptions(isSsl, serviceName, servicePort);
+                    HttpClientOptions httpClientOptions = createHttpClientOptions(isSsl, esServiceName, esServicePort);
                     query(searchQuery, indexes, resultHandler, httpClientOptions);
                 } else {
                     LOGGER.error("Error loading Config Map:", configMap.cause());
