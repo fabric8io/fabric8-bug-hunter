@@ -1,0 +1,60 @@
+= Cheatsheets
+
+[[AppInfo]]
+== AppInfo
+
+++++
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[branch]]`branch`|`String`|-
+|[[group]]`group`|`String`|-
+|[[issueTrackerUrl]]`issueTrackerUrl`|`String`|-
+|[[project]]`project`|`String`|-
+|[[projectUrl]]`projectUrl`|`String`|-
+|[[revision]]`revision`|`String`|-
+|[[version]]`version`|`String`|-
+|===
+
+[[BugInfo]]
+== BugInfo
+
+++++
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[app]]`app`|`link:dataobjects.html#AppInfo[AppInfo]`|-
+|[[count]]`count`|`Number (int)`|-
+|[[id]]`id`|`String`|-
+|[[logMessage]]`logMessage`|`String`|-
+|[[pod]]`pod`|`link:dataobjects.html#PodInfo[PodInfo]`|-
+|[[score]]`score`|`Number (float)`|-
+|[[timestamp]]`timestamp`|`String`|-
+|===
+
+[[PodInfo]]
+== PodInfo
+
+++++
+++++
+'''
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[containerName]]`containerName`|`String`|-
+|[[host]]`host`|`String`|-
+|[[namespace]]`namespace`|`String`|-
+|[[podId]]`podId`|`String`|-
+|[[podName]]`podName`|`String`|-
+|===
+

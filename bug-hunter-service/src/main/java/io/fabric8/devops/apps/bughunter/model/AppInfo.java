@@ -1,10 +1,12 @@
 package io.fabric8.devops.apps.bughunter.model;
 
+import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
 /**
  * @author kameshs
  */
+@DataObject(generateConverter = true)
 public class AppInfo {
     private String group;
     private String project;
@@ -13,6 +15,13 @@ public class AppInfo {
     private String revision;
     private String issueTrackerUrl;
     private String projectUrl;
+
+    public AppInfo() {
+    }
+
+    public AppInfo(JsonObject json) {
+        AppInfoConverter.fromJson(json, this);
+    }
 
     public AppInfo(String group, String project, String version, String branch, String revision,
                    String issueTrackerUrl, String projectUrl) {
@@ -29,56 +38,69 @@ public class AppInfo {
         return branch;
     }
 
-    public void setBranch(String branch) {
+    public AppInfo setBranch(String branch) {
         this.branch = branch;
+        return this;
     }
 
     public String getGroup() {
         return group;
     }
 
-    public void setGroup(String group) {
+    public AppInfo setGroup(String group) {
         this.group = group;
+        return this;
     }
 
     public String getProject() {
         return project;
     }
 
-    public void setProject(String project) {
+    public AppInfo setProject(String project) {
         this.project = project;
+        return this;
     }
 
     public String getVersion() {
         return version;
     }
 
-    public void setVersion(String version) {
+    public AppInfo setVersion(String version) {
         this.version = version;
+        return this;
     }
 
     public String getRevision() {
         return revision;
     }
 
-    public void setRevision(String revision) {
+    public AppInfo setRevision(String revision) {
         this.revision = revision;
+        return this;
     }
 
     public String getIssueTrackerUrl() {
         return issueTrackerUrl;
     }
 
-    public void setIssueTrackerUrl(String issueTrackerUrl) {
+    public AppInfo setIssueTrackerUrl(String issueTrackerUrl) {
         this.issueTrackerUrl = issueTrackerUrl;
+        return this;
     }
 
     public String getProjectUrl() {
         return projectUrl;
     }
 
-    public void setProjectUrl(String projectUrl) {
+    public AppInfo setProjectUrl(String projectUrl) {
         this.projectUrl = projectUrl;
+        return this;
+    }
+
+    public JsonObject toJson() {
+        JsonObject json = new JsonObject();
+        AppInfoConverter.toJson(this, json);
+        return json;
     }
 
     @Override

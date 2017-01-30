@@ -1,26 +1,13 @@
 package io.fabric8.devops.apps.bughunter;
 
-import io.fabric8.devops.apps.bughunter.events.ExceptionsEventManager;
-import io.vertx.core.AsyncResult;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.http.HttpClientOptions;
+import io.fabric8.devops.apps.bughunter.service.LogsAnalyzerService;
+import io.fabric8.devops.apps.elasticsearch.helper.service.ElasticSearchService;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.configuration.ConfigurationRetriever;
-import io.vertx.ext.configuration.ConfigurationRetrieverOptions;
-import io.vertx.ext.configuration.ConfigurationStoreOptions;
-import io.vertx.rxjava.core.AbstractVerticle;
-import io.vertx.rxjava.core.buffer.Buffer;
-import io.vertx.rxjava.core.eventbus.EventBus;
-import io.vertx.rxjava.core.http.HttpClient;
-import io.vertx.rxjava.ext.web.client.HttpResponse;
-import io.vertx.rxjava.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rx.Single;
-
-import java.time.Duration;
+import rx.Observable;
 
 /**
  * @author kameshs
@@ -28,108 +15,53 @@ import java.time.Duration;
 public class BugHunterVerticle extends AbstractVerticle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BugHunterVerticle.class);
-    public static final String EXCEPTIONS_EVENT_BUS_ADDR = "exceptions-events";
 
-    //FIXME - need to have some query and its factories for standard log analysis
-//    final String queryString = "kubernetes.namespace_name: \"default\" " +
-//        "AND kubernetes.labels.group: \"io.fabric8\"" +
-//        "AND log: \"Exception\" ";
 
     @Override
     public void start() throws Exception {
 
-        final EventBus eventBus = vertx.eventBus();
+        LOGGER.info("Starting Bug Hunter with Configuration {}", config());
 
-        final ConfigurationStoreOptions cfgStoreOpts = new ConfigurationStoreOptions()
-            .setType("configmap")
-            .setConfig(new JsonObject()
-                .put("namespace", "default")
-                .put("name", "bug-hunter"));
+        int huntingIntervalInSeconds = config().getInteger("hunting-interval");
 
-        final ConfigurationRetrieverOptions cfgRetrieverOptions = new ConfigurationRetrieverOptions();
-        cfgRetrieverOptions
-            .addStore(cfgStoreOpts)
-            .setScanPeriod(30000);
+        ElasticSearchService elasticSearchService = ElasticSearchService.createProxy(vertx);
 
-        ConfigurationRetriever configMapRetriever = ConfigurationRetriever.create(getVertx(), cfgRetrieverOptions);
+        LogsAnalyzerService logsAnalyzerService = LogsAnalyzerService.createExceptionAnalyzerProxy(vertx);
 
-        configMapRetriever.getConfiguration(configMap -> {
-            if (configMap.succeeded()) {
+        vertx.setPeriodic(huntingIntervalInSeconds * 1000, aLong -> {
 
-                JsonObject configData = configMap.result();
+            String searchQuery = config().getString("hunting-search-query");
 
-                String esServiceName = configData.getString("elastic-search-service-name");
+            elasticSearchService.search(searchQuery, result -> {
 
-                int esServicePort = configData.getInteger("elastic-search-service-port");
-
-                int huntingIntervalInSeconds = configData.getInteger("hunting-interval");
-
-                String searchQuery = configData.getString("hunting-search-query");
-
-                LOGGER.trace("Elastic Search Service Name: {} and on port {} with schedule " +
-                        "{} seconds with Query:{}", esServiceName,
-                    esServicePort, huntingIntervalInSeconds, searchQuery);
-
-                //TODO is this right to make this worker ???
-                final DeploymentOptions exceptionsManagerOpts = new DeploymentOptions();
-                exceptionsManagerOpts.setWorker(true);
-                vertx.deployVerticle(ExceptionsEventManager.class.getName(), exceptionsManagerOpts);
-
-                HttpClientOptions httpClientOptions = new HttpClientOptions();
-                httpClientOptions.setDefaultHost(esServiceName);
-                httpClientOptions.setDefaultPort(esServicePort);
-
-                //FIXME - can I not make only Rx subscribe scheduled ??
-                vertx.setPeriodic(Duration.ofSeconds(huntingIntervalInSeconds).toMillis(),
-                    aLong -> elasticSearchEndpoint(httpClientOptions, result -> {
-                        if (result.succeeded()) {
-                            Single<HttpResponse<Buffer>> queryResponse = result.result();
-                            //FIXME - wonderful if I can make this scheduled
-                            queryResponse.subscribe(res -> {
-                                JsonObject response = res.bodyAsJsonObject();
-                                if (res.statusCode() == 200) {
-                                    eventBus.send(EXCEPTIONS_EVENT_BUS_ADDR, response);
-                                } else {
-                                    LOGGER.warn("Invalid response {}", res.statusMessage());
-                                }
-                            }, error -> LOGGER.error("Error while searching ", error));
+                if (result.succeeded()) {
+                    LOGGER.trace("Result:{}", result.result());
+                    JsonObject jsonObject = result.result();
+                    JsonObject hits = jsonObject.getJsonObject("hits");
+                    JsonArray hitsOfHits = hits.getJsonArray("hits");
+                    logsAnalyzerService.analyze(hitsOfHits, hitsAnalysisResult -> {
+                        if (hitsAnalysisResult.succeeded()) {
+                            JsonObject bugsData = hitsAnalysisResult.result();
+                            LOGGER.debug("Analysis Result {}", bugsData);
+                            JsonArray bugs = bugsData.getJsonArray("bugs");
+                            Observable<Object> bugsObservable = Observable.from(bugs);
+                            bugsObservable.map(JsonObject.class::cast)
+                                .subscribe(bugData -> elasticSearchService.save("bughunter", "bugs", bugData,
+                                    res -> {
+                                        if (res.succeeded()) {
+                                            LOGGER.info("Saved data:{}", res.result());
+                                        } else {
+                                            LOGGER.info("Error saving data", res.cause());
+                                        }
+                                    }));
                         } else {
-                            LOGGER.error("Error while building the client ", result.cause());
+                            LOGGER.error("Error Analyzing Result", hitsAnalysisResult.cause());
                         }
-                    }, searchQuery));
-            } else {
-                LOGGER.error("Unable to find config map ", configMap.cause());
-            }
+                    });
+                } else {
+                    LOGGER.error("Error:", result.cause());
+                }
+            });
         });
-
-
-    }
-
-
-    /**
-     * @param httpClientOptions
-     * @param queryResponseHandler
-     */
-    public void elasticSearchEndpoint(HttpClientOptions httpClientOptions,
-                                      Handler<AsyncResult<Single<HttpResponse<Buffer>>>> queryResponseHandler,
-                                      String searchQuery) {
-        io.vertx.core.http.HttpClient httpClient = getVertx().createHttpClient(httpClientOptions);
-        HttpClient rxHttpClient = HttpClient.newInstance(httpClient);
-        WebClient webClient = WebClient.wrap(rxHttpClient);
-        queryResponseHandler.handle(Future.succeededFuture(webClient.get("logstash-*/_search")
-            .addQueryParam("q", searchQuery)
-            .rxSend()));
-    }
-
-    /**
-     * Builds the Kubernetes service filter based on &quotname&quot;
-     *
-     * @param serviceName - the name of the service that will be added to the filter
-     * @return - {@link JsonObject}
-     */
-    protected JsonObject buildServiceFilter(String serviceName) {
-        JsonObject serviceFilter = new JsonObject();
-        serviceFilter.put("name", serviceName);
-        return serviceFilter;
     }
 }

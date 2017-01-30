@@ -1,28 +1,36 @@
 package io.fabric8.devops.apps.bughunter.model;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import io.vertx.codegen.annotations.DataObject;
+import io.vertx.core.json.JsonObject;
 
 /**
  * @author kameshs
  */
-public class BugInfo{
+@DataObject(generateConverter = true)
+public class BugInfo {
 
     private String id;
     private float score;
-    private Date timestamp;
-    private List<PodInfo> pods = new ArrayList<>();
-    private List<AppInfo> apps = new ArrayList<>();
+    private String timestamp;
+    private PodInfo pod;
+    private AppInfo app;
     private String logMessage;
     private int count;
 
-    public BugInfo(String id, float score, Date timestamp, List<PodInfo> pods, List<AppInfo> apps, String logMessage, int count) {
+    public BugInfo() {
+
+    }
+
+    public BugInfo(JsonObject json) {
+        BugInfoConverter.fromJson(json, this);
+    }
+
+    public BugInfo(String id, float score, String timestamp, PodInfo pod, AppInfo app, String logMessage, int count) {
         this.id = id;
         this.score = score;
         this.timestamp = timestamp;
-        this.pods = pods;
-        this.apps = apps;
+        this.pod = pod;
+        this.app = app;
         this.logMessage = logMessage;
         this.count = count;
     }
@@ -31,55 +39,68 @@ public class BugInfo{
         return id;
     }
 
-    public void setId(String id) {
+    public BugInfo setId(String id) {
         this.id = id;
+        return this;
     }
 
-    public Date getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(Date timestamp) {
+    public BugInfo setTimestamp(String timestamp) {
         this.timestamp = timestamp;
+        return this;
     }
 
-    public List<PodInfo> getPods() {
-        return pods;
+    public PodInfo getPod() {
+        return pod;
     }
 
-    public void setPods(List<PodInfo> pods) {
-        this.pods = pods;
+    public BugInfo setPod(PodInfo pod) {
+        this.pod = pod;
+        return this;
     }
 
-    public List<AppInfo> getApps() {
-        return apps;
+    public AppInfo getApp() {
+        return app;
     }
 
-    public void setApps(List<AppInfo> apps) {
-        this.apps = apps;
+    public BugInfo setApp(AppInfo app) {
+        this.app = app;
+        return this;
     }
 
     public String getLogMessage() {
         return logMessage;
     }
 
-    public void setLogMessage(String logMessage) {
+    public BugInfo setLogMessage(String logMessage) {
         this.logMessage = logMessage;
+        return this;
     }
 
     public int getCount() {
         return count;
     }
 
-    public void setCount(int count) {
+    public BugInfo setCount(int count) {
         this.count = count;
+        return this;
     }
 
     public float getScore() {
         return score;
     }
 
-    public void setScore(float score) {
+    public BugInfo setScore(float score) {
         this.score = score;
+        return this;
+    }
+
+    public JsonObject toJson() {
+        JsonObject json = new JsonObject();
+        BugInfoConverter.toJson(this, json);
+        return json;
     }
 }

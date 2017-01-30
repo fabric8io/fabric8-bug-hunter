@@ -1,16 +1,26 @@
 package io.fabric8.devops.apps.bughunter.model;
 
+import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
 
 /**
  * @author kameshs
  */
-public class PodInfo{
+@DataObject(generateConverter = true)
+public class PodInfo {
     private String namespace;
     private String host;
     private String containerName;
     private String podId;
     private String podName;
+
+    public PodInfo() {
+
+    }
+
+    public PodInfo(JsonObject json) {
+        PodInfoConverter.fromJson(json, this);
+    }
 
     public PodInfo(String namespace, String host, String containerName, String podId, String podName) {
         this.namespace = namespace;
@@ -24,40 +34,52 @@ public class PodInfo{
         return namespace;
     }
 
-    public void setNamespace(String namespace) {
+    public PodInfo setNamespace(String namespace) {
         this.namespace = namespace;
+        return this;
     }
 
     public String getHost() {
         return host;
     }
 
-    public void setHost(String host) {
+    public PodInfo setHost(String host) {
         this.host = host;
+        return this;
     }
 
     public String getContainerName() {
         return containerName;
     }
 
-    public void setContainerName(String containerName) {
+    public PodInfo setContainerName(String containerName) {
         this.containerName = containerName;
+        return this;
     }
 
     public String getPodId() {
         return podId;
     }
 
-    public void setPodId(String podId) {
+    public PodInfo setPodId(String podId) {
         this.podId = podId;
+        return this;
     }
 
     public String getPodName() {
         return podName;
     }
 
-    public void setPodName(String podName) {
+    public PodInfo setPodName(String podName) {
         this.podName = podName;
+        return this;
+    }
+
+
+    public JsonObject toJson() {
+        JsonObject json = new JsonObject();
+        PodInfoConverter.toJson(this, json);
+        return json;
     }
 
     @Override
