@@ -122,7 +122,6 @@
         <executions>
           <execution>
             <id>fmp</id>
-            <phase>package</phase>
             <goals>
               <goal>resource</goal>
               <goal>helm</goal>

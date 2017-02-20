@@ -22,8 +22,8 @@ fun ElasticSearchOptions(
   configMap: String? = null,
   configMapScanPeriod: Long? = null,
   host: String? = null,
-  indexes: List<String>? = null,
-  indexs: List<String>? = null,
+  indexes: Iterable<String>? = null,
+  indexs: Iterable<String>? = null,
   kubernetesNamespace: String? = null,
   port: Int? = null,
   ssl: Boolean? = null): ElasticSearchOptions = io.fabric8.devops.apps.elasticsearch.helper.service.ElasticSearchOptions().apply {
@@ -38,7 +38,7 @@ fun ElasticSearchOptions(
     this.setHost(host)
   }
   if (indexes != null) {
-    this.setIndexes(indexes)
+    this.setIndexes(indexes.toList())
   }
   if (indexs != null) {
     for (item in indexs) {

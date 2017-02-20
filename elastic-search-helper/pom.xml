@@ -16,8 +16,9 @@
   <description>The microservice will have some common helper methods to perform REST operations on ES</description>
 
   <properties>
-    <!-- fabric8 properties-->
-    <fabric8.service.name>${project.artifactId}</fabric8.service.name>
+    <fabric8.skip>true</fabric8.skip>
+    <docker.skip>true</docker.skip>
+    <docker.skip.build>true</docker.skip.build>
     <commons-lang3.version>3.5</commons-lang3.version>
   </properties>
 
