@@ -1,4 +1,4 @@
 .vertx
 *.iml
 .idea
-**/K8sScrap.java
+!**/K8sScrap.java

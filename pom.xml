@@ -10,7 +10,7 @@
   <version>1.0</version>
 
   <name>fabric8:: Bug Hunter:: Demo</name>
-  <description> A PoC for analysing the fabric8 applications/platform logs</description>
+  <description>Tool for analysing the fabric8 applications/platform logs</description>
 
   <modules>
     <module>elastic-search-helper</module>
@@ -38,7 +38,7 @@
 
     <!-- vert.x-->
     <vertx.version>3.4.0-SNAPSHOT</vertx.version>
-    <fabric8.vertx.plugin.version>1.0-SNAPSHOT</fabric8.vertx.plugin.version>
+    <fabric8.vertx.plugin.version>1.0.4</fabric8.vertx.plugin.version>
 
   </properties>
 
